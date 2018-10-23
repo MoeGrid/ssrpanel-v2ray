@@ -15,8 +15,7 @@ git submodule update --init --recursive
 
 ## 配置V2ray
 
-下载
-
+下载:
 [https://github.com/v2ray/v2ray-core/releases](https://github.com/v2ray/v2ray-core/releases)
 
 按照 config.json 模板修改
