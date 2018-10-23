@@ -1,0 +1,3 @@
+[submodule "src/main/proto/v2ray.com/core"]
+	path = src/main/proto/v2ray.com/core
+	url = https://github.com/v2ray/v2ray-core.git
