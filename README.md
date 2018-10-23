@@ -6,6 +6,7 @@ SSRpanel面板:
 
 ## 构建
 
+先装JDK8，方法不多说，百度google一大堆
 ```bash
 git clone https://github.com/aiyahacke/ssrpanel-v2ray.git
 cd ssrpanel-v2ray
