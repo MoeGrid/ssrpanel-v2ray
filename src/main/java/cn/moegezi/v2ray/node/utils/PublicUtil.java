@@ -1,6 +1,5 @@
 package cn.moegezi.v2ray.node.utils;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteWatchdog;
@@ -33,18 +32,15 @@ public class PublicUtil {
     public static String exec(String command) {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
             CommandLine commandline = CommandLine.parse(command);
             DefaultExecutor exec = new DefaultExecutor();
             exec.setExitValues(null);
             ExecuteWatchdog watchdog = new ExecuteWatchdog(10000);
             exec.setWatchdog(watchdog);
-            PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream, errorStream);
+            PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
             exec.setStreamHandler(streamHandler);
             exec.execute(commandline);
-            String out = outputStream.toString("UTF-8");
-            String error = errorStream.toString("UTF-8");
-            return out + error;
+            return outputStream.toString("UTF-8");
         } catch (Exception e) {
             e.printStackTrace();
             return e.getMessage();

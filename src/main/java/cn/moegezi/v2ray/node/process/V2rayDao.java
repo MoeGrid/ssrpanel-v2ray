@@ -8,48 +8,17 @@ import cn.moegezi.v2ray.node.utils.LRUCache;
 import cn.moegezi.v2ray.node.utils.PublicUtil;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.List;
 
 public class V2rayDao {
 
-    /*
-    push_db_all_user
-        update_all_user
-    pull_db_all_user
-    del_server_out_of_bound_safe
-
-    // 1. 记录流量日志
-    INSERT INTO `user_traffic_log` (`id`, `user_id`, `u`, `d`, `node_id`, `rate`, `traffic`, `log_time`) VALUES ()
-
-    // 2. 记录用户流量信息
-    UPDATE user
-    SET
-        u = CASE port
-            WHEN 端口 THEN
-                u + 上传 * 比例
-        END,
-        d = CASE port
-            WHEN 端口 THEN
-                d + 下载 * 比例
-        END,
-        t = 时间
-        WHERE port IN (端口列表)
-
-    // 3. 记录节点在线信息
-    INSERT INTO `ss_node_online_log` (`id`, `node_id`, `online_user`, `log_time`) VALUES ()
-
-    // 4. 节点负载信息
-    INSERT INTO `ss_node_info` (`id`, `node_id`, `uptime`, `load`, `log_time`) VALUES ()
-
-    // 5. 获取用户
-    SELECT id, method, port, u, d, transfer_enable, passwd, enable, obfs, protocol FROM user WHERE port > 0
-
-    */
-
     private static V2rayDao instance;
 
+    private final Logger logger = LoggerFactory.getLogger(V2rayDao.class);
     private final QueryRunner db;
 
     private static final String GET_ALL_USER = "SELECT id, vmess_id vmessId FROM user WHERE enable = 1 AND u + d < transfer_enable";
@@ -81,7 +50,7 @@ public class V2rayDao {
         try {
             db.batch(TRAFFIC_LOG, param);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("记录流量日志异常", e);
         }
     }
 
@@ -99,10 +68,9 @@ public class V2rayDao {
         ids.deleteCharAt(ids.length() - 1);
         try {
             String sql = String.format(UPDATE_USER_TRAFFIC, uSql, dSql, t, ids);
-            System.out.println(sql);
             db.execute(sql);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("更新用户流量信息异常", e);
         }
     }
 
@@ -114,8 +82,9 @@ public class V2rayDao {
         }
         try {
             db.execute(NODE_ONLINE_LOG, nodeId, localCache.size());
+            logger.info("更新在线用户数: NUMBER " + localCache.size());
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("更新节点在线信息异常", e);
         }
     }
 
@@ -124,18 +93,19 @@ public class V2rayDao {
         String load = PublicUtil.isLinux() ? PublicUtil.exec("cat /proc/loadavg | awk '{ print $1\" \"$2\" \"$3 }'") : "0.00 0.00 0.00";
         try {
             db.execute(UPDATE_NODE_INFO, nodeId, PublicUtil.getV2rayUpTime(), load);
+            logger.info("更新节点负载信息: LOAD " + load);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("更新节点负载信息异常", e);
         }
     }
 
-    // 4. 获取所有用户
+    // 4. 更新所有用户
     public List<UserModel> getAllUser() {
         List<UserModel> result = null;
         try {
             result = db.query(GET_ALL_USER, new BeanListHandler<>(UserModel.class));
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("更新用户异常", e);
         }
         return result;
     }

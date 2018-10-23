@@ -29,6 +29,8 @@ public class V2rayGrpc {
     private final String security = ConfigUtil.getString("v2ray.security");
     private final Integer alterId = ConfigUtil.getInteger("v2ray.alter-id");
     private final Integer level = ConfigUtil.getInteger("v2ray.level");
+    private final String address = ConfigUtil.getString("v2ray.grpc.address");
+    private final Integer port = ConfigUtil.getInteger("v2ray.grpc.port");
 
     private static final String UplinkFormat = "user>>>%s>>>traffic>>>uplink";
     private static final String DownlinkFormat = "user>>>%s>>>traffic>>>downlink";
@@ -47,7 +49,7 @@ public class V2rayGrpc {
 
     public void start() {
         if (channel != null && !channel.isShutdown()) stop();
-        channel = ManagedChannelBuilder.forAddress("127.0.0.1", 10086).usePlaintext().build();
+        channel = ManagedChannelBuilder.forAddress(address, port).usePlaintext().build();
         handlerService = HandlerServiceGrpc.newBlockingStub(channel);
         statsService = StatsServiceGrpc.newBlockingStub(channel);
     }
@@ -55,8 +57,7 @@ public class V2rayGrpc {
     public void stop() {
         try {
             channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ignored) {
         }
     }
 
@@ -102,8 +103,12 @@ public class V2rayGrpc {
             }
         }
         users.addAll(add);
+        if (add.size() > 0 || remove.size() > 0) {
+            logger.info("更新用户: ADD " + add.size() + " REMOVE " + remove.size());
+        }
     }
 
+    // 添加用户
     private void addUser(UserModel userModel) {
         AlterInboundRequest req = AlterInboundRequest
                 .newBuilder()
@@ -138,12 +143,12 @@ public class V2rayGrpc {
                 .build();
         try {
             handlerService.alterInbound(req);
-            logger.info("添加用户: USER " + userModel.getEmail());
         } catch (StatusRuntimeException e) {
             logger.error("添加用户失败" + e);
         }
     }
 
+    // 删除用户
     private void removeUser(String email) {
         AlterInboundRequest req = AlterInboundRequest
                 .newBuilder()
@@ -160,12 +165,12 @@ public class V2rayGrpc {
                 .build();
         try {
             handlerService.alterInbound(req);
-            logger.info("删除用户: USER " + email);
         } catch (StatusRuntimeException e) {
             logger.error("删除用户失败", e);
         }
     }
 
+    // 获得用户流量
     private long getTraffic(String email, String fmt) {
         email = String.format(fmt, email);
         GetStatsRequest req = GetStatsRequest

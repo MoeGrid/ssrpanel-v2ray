@@ -36,12 +36,13 @@ public class UserModel {
         if (this == o) return true;
         if (!(o instanceof UserModel)) return false;
         UserModel userModel = (UserModel) o;
-        return Objects.equals(getId(), userModel.getId());
+        return Objects.equals(getId(), userModel.getId()) &&
+                Objects.equals(getVmessId(), userModel.getVmessId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId());
+        return Objects.hash(getId(), getVmessId());
     }
 
     public String getEmail() {
