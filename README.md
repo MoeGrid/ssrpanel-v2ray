@@ -46,7 +46,7 @@ chmod +x ./mvnw
   伪装域名
   WS/H2路径
   TLS
-  (相见官方文档 https://v2ray.com/chapter_02/05_transport.html)
+  (详见官方文档 https://v2ray.com/chapter_02/05_transport.html)
 ```
 
 ## 配置节点端
