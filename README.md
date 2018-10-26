@@ -4,9 +4,9 @@ SSRPanel的V2ray节点端
 SSRpanel面板: 
 [https://github.com/ssrpanel/SSRPanel](https://github.com/ssrpanel/SSRPanel)
 
-## 构建
+## 环境配置
 
-先装JDK8
+安装JDK8
 ```bash
 # ubuntu
 sudo apt install openjdk-8-jdk
@@ -14,21 +14,12 @@ sudo apt install openjdk-8-jdk
 yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
 ```
 
-构建
-```bash
-git clone https://github.com/aiyahacke/ssrpanel-v2ray.git
-cd ssrpanel-v2ray
-git submodule update --init --recursive
-chmod +x ./mvnw
-./mvnw package
-```
-
 ## 配置V2ray
 
 下载V2ray
 [https://github.com/v2ray/v2ray-core/releases](https://github.com/v2ray/v2ray-core/releases)
 
-按照 config.json 为模板修改，可以添加一些自定义的配置
+按照本项目中 config.json 为模板修改，可以添加一些自定义的配置
 
 ## 配置SSRPanel后台
 ```
@@ -51,7 +42,8 @@ chmod +x ./mvnw
 
 ## 配置节点端
 ```
-将 config.properties 和 target 目录中的 jar 文件和 lib 目录放到一起
+
+在 releases 页面下载编译版
 修改 config.properties
 
 几个重点配置项
@@ -68,3 +60,12 @@ chmod +x ./mvnw
 ```
 
 执行 `java -jar xxxxx.jar`即可
+
+## 构建
+```bash
+git clone https://github.com/aiyahacke/ssrpanel-v2ray.git
+cd ssrpanel-v2ray
+git submodule update --init --recursive
+chmod +x ./mvnw
+./mvnw package
+```
