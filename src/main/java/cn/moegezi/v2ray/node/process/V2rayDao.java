@@ -94,9 +94,16 @@ public class V2rayDao {
 
     // 4. 记录节点负载信息
     public void updateNodeInfo() {
-        String load = PublicUtil.isLinux() ? PublicUtil.exec("cat /proc/loadavg | awk '{ print $1\" \"$2\" \"$3 }'") : "0.00 0.00 0.00";
+        String load = "0.00 0.00 0.00";
+        if (PublicUtil.isLinux()) {
+            load = PublicUtil.exec("cat /proc/loadavg");
+            String[] loads = load.split(" ");
+            if (loads.length >= 3) {
+                load = loads[0] + loads[1] + loads[2];
+            }
+        }
         try {
-            db.execute(UPDATE_NODE_INFO, nodeId, PublicUtil.getV2rayUpTime(), load);
+            db.execute(UPDATE_NODE_INFO, nodeId, PublicUtil.getV2rayUpTime() / 1000, load);
             logger.info("更新节点负载信息: LOAD " + load);
         } catch (SQLException e) {
             logger.error("更新节点负载信息异常", e);

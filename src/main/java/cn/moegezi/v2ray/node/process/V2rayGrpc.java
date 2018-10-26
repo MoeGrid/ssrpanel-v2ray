@@ -3,14 +3,23 @@ package cn.moegezi.v2ray.node.process;
 import cn.moegezi.v2ray.node.model.UserModel;
 import cn.moegezi.v2ray.node.model.UserTrafficLog;
 import cn.moegezi.v2ray.node.utils.ConfigUtil;
+import com.google.protobuf.ByteString;
+import com.v2ray.core.InboundHandlerConfig;
+import com.v2ray.core.app.proxyman.ReceiverConfig;
 import com.v2ray.core.app.proxyman.command.*;
 import com.v2ray.core.app.stats.command.GetStatsRequest;
 import com.v2ray.core.app.stats.command.GetStatsResponse;
 import com.v2ray.core.app.stats.command.StatsServiceGrpc;
+import com.v2ray.core.common.net.IPOrDomain;
+import com.v2ray.core.common.net.Network;
+import com.v2ray.core.common.net.PortRange;
 import com.v2ray.core.common.protocol.SecurityConfig;
 import com.v2ray.core.common.protocol.SecurityType;
 import com.v2ray.core.common.protocol.User;
 import com.v2ray.core.common.serial.TypedMessage;
+import com.v2ray.core.proxy.shadowsocks.Account;
+import com.v2ray.core.proxy.shadowsocks.CipherType;
+import com.v2ray.core.proxy.shadowsocks.ServerConfig;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -167,6 +176,62 @@ public class V2rayGrpc {
             handlerService.alterInbound(req);
         } catch (StatusRuntimeException e) {
             logger.error("删除用户失败", e);
+        }
+    }
+
+    public void addSsUser() {
+        AddInboundRequest req = AddInboundRequest
+                .newBuilder()
+                .setInbound(InboundHandlerConfig
+                        .newBuilder()
+                        .setTag("SSTag")
+                        .setReceiverSettings(TypedMessage
+                                .newBuilder()
+                                .setType(ReceiverConfig.getDescriptor().getFullName())
+                                .setValue(ReceiverConfig
+                                        .newBuilder()
+                                        .setPortRange(PortRange
+                                                .newBuilder()
+                                                .setFrom(10088)
+                                                .setTo(10088)
+                                                .build())
+                                        .setListen(IPOrDomain
+                                                .newBuilder()
+                                                .setIp(ByteString.copyFrom(new byte[]{0, 0, 0, 0}))
+                                                .build())
+                                        .build()
+                                        .toByteString())
+                                .build())
+                        .setProxySettings(TypedMessage
+                                .newBuilder()
+                                .setType(ServerConfig.getDescriptor().getFullName())
+                                .setValue(ServerConfig
+                                        .newBuilder()
+                                        .setUser(User
+                                                .newBuilder()
+                                                .setAccount(TypedMessage
+                                                        .newBuilder()
+                                                        .setType(com.v2ray.core.proxy.shadowsocks.Account.getDescriptor().getFullName())
+                                                        .setValue(com.v2ray.core.proxy.shadowsocks.Account
+                                                                .newBuilder()
+                                                                .setPassword("password")
+                                                                .setCipherType(CipherType.CHACHA20)
+                                                                .setOta(Account.OneTimeAuth.Auto)
+                                                                .build()
+                                                                .toByteString())
+                                                        .build())
+                                                .setLevel(1)
+                                                .build())
+                                        .addNetwork(Network.TCP)
+                                        .build()
+                                        .toByteString())
+                                .build())
+                        .build())
+                .build();
+        try {
+            handlerService.addInbound(req);
+        } catch (StatusRuntimeException e) {
+            logger.error("添加SS用户失败", e);
         }
     }
 
