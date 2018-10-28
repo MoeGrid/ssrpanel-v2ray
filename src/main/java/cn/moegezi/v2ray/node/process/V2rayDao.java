@@ -99,7 +99,7 @@ public class V2rayDao {
             load = PublicUtil.exec("cat /proc/loadavg");
             String[] loads = load.split(" ");
             if (loads.length >= 3) {
-                load = loads[0] + loads[1] + loads[2];
+                load = loads[0] + ' ' + loads[1] + ' ' + loads[2];
             }
         }
         try {
