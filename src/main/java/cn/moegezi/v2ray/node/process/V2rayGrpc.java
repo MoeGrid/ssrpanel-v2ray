@@ -47,8 +47,6 @@ public class V2rayGrpc {
     private static V2rayGrpc instance;
 
     private ManagedChannel channel;
-    private HandlerServiceGrpc.HandlerServiceBlockingStub handlerService;
-    private StatsServiceGrpc.StatsServiceBlockingStub statsService;
 
     private List<UserModel> users = new ArrayList<>();
 
@@ -59,8 +57,6 @@ public class V2rayGrpc {
     public void start() {
         if (channel != null && !channel.isShutdown()) stop();
         channel = ManagedChannelBuilder.forAddress(address, port).usePlaintext().build();
-        handlerService = HandlerServiceGrpc.newBlockingStub(channel);
-        statsService = StatsServiceGrpc.newBlockingStub(channel);
     }
 
     public void stop() {
@@ -119,6 +115,7 @@ public class V2rayGrpc {
 
     // 添加用户
     private void addUser(UserModel userModel) {
+        HandlerServiceGrpc.HandlerServiceBlockingStub handlerService = HandlerServiceGrpc.newBlockingStub(channel);
         AlterInboundRequest req = AlterInboundRequest
                 .newBuilder()
                 .setTag(v2rayTag)
@@ -159,6 +156,7 @@ public class V2rayGrpc {
 
     // 删除用户
     private void removeUser(String email) {
+        HandlerServiceGrpc.HandlerServiceBlockingStub handlerService = HandlerServiceGrpc.newBlockingStub(channel);
         AlterInboundRequest req = AlterInboundRequest
                 .newBuilder()
                 .setTag(v2rayTag)
@@ -180,6 +178,7 @@ public class V2rayGrpc {
     }
 
     public void addSsUser() {
+        HandlerServiceGrpc.HandlerServiceBlockingStub handlerService = HandlerServiceGrpc.newBlockingStub(channel);
         AddInboundRequest req = AddInboundRequest
                 .newBuilder()
                 .setInbound(InboundHandlerConfig
@@ -237,6 +236,7 @@ public class V2rayGrpc {
 
     // 获得用户流量
     private long getTraffic(String email, String fmt) {
+        StatsServiceGrpc.StatsServiceBlockingStub statsService = StatsServiceGrpc.newBlockingStub(channel);
         email = String.format(fmt, email);
         GetStatsRequest req = GetStatsRequest
                 .newBuilder()
