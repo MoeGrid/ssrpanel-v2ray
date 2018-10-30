@@ -4,7 +4,7 @@ SSRPanel的V2ray节点端
 SSRpanel面板: 
 [https://github.com/ssrpanel/SSRPanel](https://github.com/ssrpanel/SSRPanel)
 
-## 建议
+## 声明
 
 ### 先去v2ray.com熟悉一下V2ray的基本配置
 ### 先去v2ray.com熟悉一下V2ray的基本配置
