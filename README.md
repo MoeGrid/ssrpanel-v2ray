@@ -4,6 +4,15 @@ SSRPanel的V2ray节点端
 SSRpanel面板: 
 [https://github.com/ssrpanel/SSRPanel](https://github.com/ssrpanel/SSRPanel)
 
+## 建议
+
+# 先去v2ray.com熟悉一下V2ray的基本配置
+# 先去v2ray.com熟悉一下V2ray的基本配置
+# 先去v2ray.com熟悉一下V2ray的基本配置
+# 我管的是如何将V2ray连接面板，不是教你们怎么配置V2ray的
+# 我管的是如何将V2ray连接面板，不是教你们怎么配置V2ray的
+# 我管的是如何将V2ray连接面板，不是教你们怎么配置V2ray的
+
 ## 环境配置
 
 安装JDK8
