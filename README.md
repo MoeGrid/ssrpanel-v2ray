@@ -1,7 +1,7 @@
 ## 项目描述
 SSRPanel的V2ray节点端
 
-SSRpanel面板: 
+SSRPanel面板: 
 [https://github.com/ssrpanel/SSRPanel](https://github.com/ssrpanel/SSRPanel)
 
 ## 准备
