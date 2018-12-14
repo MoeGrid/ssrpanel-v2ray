@@ -52,6 +52,8 @@ yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
 修改 config.properties
 
 几个重点配置项
+- v2ray.system (操作系统，可选linux和windows，v0.0.3以上)
+- v2ray.arch (操作系统位数，可选32和64，v0.0.3以上)
 - ~~v2ray.grpc.port (tag为api的传入连接的端口)~~ (v0.0.3以上自动获取)
 - v2ray.tag (VMess协议的tag)
 - ~~v2ray.alter-id (与面板额外ID一致)~~ (v0.0.3以上在config.json中配置default)
