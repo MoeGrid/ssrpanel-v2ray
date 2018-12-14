@@ -23,11 +23,11 @@ sudo apt install openjdk-8-jdk
 yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
 ```
 
-## 配置V2ray
+## ~~配置V2ray~~ 
 
-~~下载V2ray:~~ (v0.0.3以上已自动下载更新)  
-[https://github.com/v2ray/v2ray-core/releases](https://github.com/v2ray/v2ray-core/releases)  
-在 config.json 中按自己希求修改一些的配置
+~~下载V2ray~~  
+~~在 config.json 中按自己希求修改一些的配置~~  
+(v0.0.3以上已自动下载更新)  
 
 ## 配置SSRPanel后台
 
@@ -65,6 +65,12 @@ yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
 
 
 执行 `java -jar xxxxx.jar`即可
+
+## v0.0.3更新说明
+
+1. 自动下载和更新V2Ray，每晚0点左右检查更新
+2. config.json位置转移到了节点端下
+3. GRPC配置会自动从config.json中读取
 
 ## 构建
 ```bash
