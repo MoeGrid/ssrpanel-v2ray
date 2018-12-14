@@ -1,9 +1,6 @@
 package cn.moegezi.v2ray.node.process;
 
-import cn.moegezi.v2ray.node.utils.ConfigUtil;
-import cn.moegezi.v2ray.node.utils.DownloadUtil;
-import cn.moegezi.v2ray.node.utils.HttpUtil;
-import cn.moegezi.v2ray.node.utils.ZipUtil;
+import cn.moegezi.v2ray.node.utils.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -63,6 +60,11 @@ public class V2rayUpdate {
                         zip.delete();
                         // 重命名目录
                         tmp.renameTo(dir);
+                        // 更改权限
+                        if (PublicUtil.isLinux()) {
+                            new File(dir, "v2ray").setExecutable(true);
+                            new File(dir, "v2ctl").setExecutable(true);
+                        }
                     } else {
                         throw new Exception("找不到更新文件");
                     }

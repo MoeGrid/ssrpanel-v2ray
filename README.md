@@ -56,7 +56,7 @@ yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
 - v2ray.arch (操作系统位数，可选32和64，v0.0.3以上)
 - ~~v2ray.grpc.port (tag为api的传入连接的端口)~~ (v0.0.3以上自动获取)
 - v2ray.tag (VMess协议的tag)
-- ~~v2ray.alter-id (与面板额外ID一致)~~ (v0.0.3以上在config.json中配置default)
+- v2ray.alter-id (与面板额外ID一致)
 - node.id (面板添加节点后得到的节点ID)
 - node.traffic-rate (与面板流量比例一致)
 

@@ -26,6 +26,8 @@ public class V2rayGrpc {
 
     private final Logger logger = LoggerFactory.getLogger(V2rayGrpc.class);
     private final String v2rayTag = ConfigUtil.getString("v2ray.tag");
+    private final Integer alterId = ConfigUtil.getInteger("v2ray.alter-id");
+    private final Integer level = ConfigUtil.getInteger("v2ray.level");
 
     private static final String UplinkFormat = "user>>>%s>>>traffic>>>uplink";
     private static final String DownlinkFormat = "user>>>%s>>>traffic>>>downlink";
@@ -66,8 +68,8 @@ public class V2rayGrpc {
         List<UserTrafficLog> list = new ArrayList<>();
         V2rayDao v2rayDao = V2rayDao.getInstance();
         for (UserModel i : users) {
-            long up = getTraffic(i.getEmail(), UplinkFormat);
-            long down = getTraffic(i.getEmail(), DownlinkFormat);
+            long up = getTraffic(i, UplinkFormat);
+            long down = getTraffic(i, DownlinkFormat);
             if (up != 0 || down != 0) {
                 UserTrafficLog t = new UserTrafficLog();
                 t.setUserId(i.getId());
@@ -122,7 +124,7 @@ public class V2rayGrpc {
                                 .newBuilder()
                                 .setUser(User
                                         .newBuilder()
-                                        // .setLevel(level)
+                                        .setLevel(level)
                                         .setEmail(userModel.getEmail())
                                         .setAccount(TypedMessage
                                                 .newBuilder()
@@ -130,7 +132,7 @@ public class V2rayGrpc {
                                                 .setValue(com.v2ray.core.proxy.vmess.Account
                                                         .newBuilder()
                                                         .setId(userModel.getVmessId())
-                                                        // .setAlterId(alterId)
+                                                        .setAlterId(alterId)
                                                         .setSecuritySettings(SecurityConfig
                                                                 .newBuilder()
                                                                 .build())
@@ -173,21 +175,21 @@ public class V2rayGrpc {
     }
 
     // 获得用户流量
-    private long getTraffic(String email, String fmt) {
+    private long getTraffic(UserModel user, String fmt) {
         StatsServiceGrpc.StatsServiceBlockingStub statsService = StatsServiceGrpc.newBlockingStub(channel);
-        email = String.format(fmt, email);
+        String q = String.format(fmt, user.getEmail());
         GetStatsRequest req = GetStatsRequest
                 .newBuilder()
                 .setReset(true)
-                .setName(email)
+                .setName(q)
                 .build();
         try {
             GetStatsResponse res = statsService.getStats(req);
             long t = res.getStat().getValue();
-            logger.info("获取用户流量: USER " + email + " TRAFFIC " + t);
+            logger.info("获取用户流量: USER " + user.getId() + " TRAFFIC " + t);
             return t;
         } catch (StatusRuntimeException e) {
-            if (!e.getMessage().contains(email + " not found"))
+            if (!e.getMessage().contains(q + " not found"))
                 logger.error("获取用户流量失败", e);
             return 0;
         }
