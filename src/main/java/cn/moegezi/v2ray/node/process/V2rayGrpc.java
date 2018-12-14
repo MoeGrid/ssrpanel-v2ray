@@ -1,25 +1,17 @@
 package cn.moegezi.v2ray.node.process;
 
+import cn.moegezi.v2ray.node.model.InboundModel;
 import cn.moegezi.v2ray.node.model.UserModel;
 import cn.moegezi.v2ray.node.model.UserTrafficLog;
 import cn.moegezi.v2ray.node.utils.ConfigUtil;
-import com.google.protobuf.ByteString;
-import com.v2ray.core.InboundHandlerConfig;
-import com.v2ray.core.app.proxyman.ReceiverConfig;
+import cn.moegezi.v2ray.node.utils.V2rayConfigUtil;
 import com.v2ray.core.app.proxyman.command.*;
 import com.v2ray.core.app.stats.command.GetStatsRequest;
 import com.v2ray.core.app.stats.command.GetStatsResponse;
 import com.v2ray.core.app.stats.command.StatsServiceGrpc;
-import com.v2ray.core.common.net.IPOrDomain;
-import com.v2ray.core.common.net.Network;
-import com.v2ray.core.common.net.PortRange;
 import com.v2ray.core.common.protocol.SecurityConfig;
-import com.v2ray.core.common.protocol.SecurityType;
 import com.v2ray.core.common.protocol.User;
 import com.v2ray.core.common.serial.TypedMessage;
-import com.v2ray.core.proxy.shadowsocks.Account;
-import com.v2ray.core.proxy.shadowsocks.CipherType;
-import com.v2ray.core.proxy.shadowsocks.ServerConfig;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -33,13 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class V2rayGrpc {
 
     private final Logger logger = LoggerFactory.getLogger(V2rayGrpc.class);
-    private final V2rayDao v2rayDao;
     private final String v2rayTag = ConfigUtil.getString("v2ray.tag");
-    private final String security = ConfigUtil.getString("v2ray.security");
-    private final Integer alterId = ConfigUtil.getInteger("v2ray.alter-id");
-    private final Integer level = ConfigUtil.getInteger("v2ray.level");
-    private final String address = ConfigUtil.getString("v2ray.grpc.address");
-    private final Integer port = ConfigUtil.getInteger("v2ray.grpc.port");
 
     private static final String UplinkFormat = "user>>>%s>>>traffic>>>uplink";
     private static final String DownlinkFormat = "user>>>%s>>>traffic>>>downlink";
@@ -50,24 +36,35 @@ public class V2rayGrpc {
 
     private List<UserModel> users = new ArrayList<>();
 
-    private V2rayGrpc() {
-        this.v2rayDao = V2rayDao.getInstance();
-    }
-
     public void start() {
-        if (channel != null && !channel.isShutdown()) stop();
-        channel = ManagedChannelBuilder.forAddress(address, port).usePlaintext().build();
+        InboundModel inbound = V2rayConfigUtil.getInboundByTag("api");
+        if (inbound != null) {
+            channel = ManagedChannelBuilder.forAddress("127.0.0.1", inbound.getPort()).usePlaintext().build();
+        } else {
+            logger.error("没有找到tag为api的传入连接");
+        }
     }
 
     public void stop() {
+        if (channel == null) return;
         try {
+            users.clear();
             channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
         }
     }
 
+    public void restart() {
+        stop();
+        start();
+    }
+
     public void update() {
+        /* 更新节点和用户情况 */
+
+        if (!V2rayManager.getInstance().status()) return;
         List<UserTrafficLog> list = new ArrayList<>();
+        V2rayDao v2rayDao = V2rayDao.getInstance();
         for (UserModel i : users) {
             long up = getTraffic(i.getEmail(), UplinkFormat);
             long down = getTraffic(i.getEmail(), DownlinkFormat);
@@ -85,10 +82,9 @@ public class V2rayGrpc {
         }
         v2rayDao.nodeOnlineLog(list);
         v2rayDao.updateNodeInfo();
-        syncUser();
-    }
 
-    private void syncUser() {
+        /* 同步用户 */
+
         List<UserModel> dbUsers = v2rayDao.getAllUser();
         List<UserModel> add = new ArrayList<>();
         List<UserModel> remove = new ArrayList<>();
@@ -126,7 +122,7 @@ public class V2rayGrpc {
                                 .newBuilder()
                                 .setUser(User
                                         .newBuilder()
-                                        .setLevel(level)
+                                        // .setLevel(level)
                                         .setEmail(userModel.getEmail())
                                         .setAccount(TypedMessage
                                                 .newBuilder()
@@ -134,10 +130,9 @@ public class V2rayGrpc {
                                                 .setValue(com.v2ray.core.proxy.vmess.Account
                                                         .newBuilder()
                                                         .setId(userModel.getVmessId())
-                                                        .setAlterId(alterId)
+                                                        // .setAlterId(alterId)
                                                         .setSecuritySettings(SecurityConfig
                                                                 .newBuilder()
-                                                                .setType(str2SecurityType(security))
                                                                 .build())
                                                         .build()
                                                         .toByteString())
@@ -177,6 +172,36 @@ public class V2rayGrpc {
         }
     }
 
+    // 获得用户流量
+    private long getTraffic(String email, String fmt) {
+        StatsServiceGrpc.StatsServiceBlockingStub statsService = StatsServiceGrpc.newBlockingStub(channel);
+        email = String.format(fmt, email);
+        GetStatsRequest req = GetStatsRequest
+                .newBuilder()
+                .setReset(true)
+                .setName(email)
+                .build();
+        try {
+            GetStatsResponse res = statsService.getStats(req);
+            long t = res.getStat().getValue();
+            logger.info("获取用户流量: USER " + email + " TRAFFIC " + t);
+            return t;
+        } catch (StatusRuntimeException e) {
+            if (!e.getMessage().contains(email + " not found"))
+                logger.error("获取用户流量失败", e);
+            return 0;
+        }
+    }
+
+    public static V2rayGrpc getInstance() {
+        if (instance == null) {
+            instance = new V2rayGrpc();
+        }
+        return instance;
+    }
+
+    /*
+    // 添加SS连接
     public void addSsUser() {
         HandlerServiceGrpc.HandlerServiceBlockingStub handlerService = HandlerServiceGrpc.newBlockingStub(channel);
         AddInboundRequest req = AddInboundRequest
@@ -233,48 +258,6 @@ public class V2rayGrpc {
             logger.error("添加SS用户失败", e);
         }
     }
-
-    // 获得用户流量
-    private long getTraffic(String email, String fmt) {
-        StatsServiceGrpc.StatsServiceBlockingStub statsService = StatsServiceGrpc.newBlockingStub(channel);
-        email = String.format(fmt, email);
-        GetStatsRequest req = GetStatsRequest
-                .newBuilder()
-                .setReset(true)
-                .setName(email)
-                .build();
-        try {
-            GetStatsResponse res = statsService.getStats(req);
-            long t = res.getStat().getValue();
-            logger.info("获取用户流量: USER " + email + " TRAFFIC " + t);
-            return t;
-        } catch (StatusRuntimeException e) {
-            if (!e.getMessage().contains(email + " not found"))
-                logger.error("获取用户流量失败", e);
-            return 0;
-        }
-    }
-
-    private SecurityType str2SecurityType(String str) {
-        switch (str) {
-            case "aes-128-gcm":
-                return SecurityType.AES128_GCM;
-            case "chacha20-poly1305":
-                return SecurityType.CHACHA20_POLY1305;
-            case "none":
-                return SecurityType.NONE;
-            case "auto":
-                return SecurityType.AUTO;
-            default:
-                return SecurityType.AUTO;
-        }
-    }
-
-    public static V2rayGrpc getInstance() {
-        if (instance == null) {
-            instance = new V2rayGrpc();
-        }
-        return instance;
-    }
+    */
 
 }

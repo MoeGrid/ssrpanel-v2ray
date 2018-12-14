@@ -1,4 +1,9 @@
 {
+  "log": {
+    "access": "./access.log",
+    "error": "./error.log",
+    "loglevel": "error"
+  },
   "api": {
     "services": [
       "HandlerService",
@@ -7,37 +12,44 @@
     "tag": "api"
   },
   "stats": {},
-  "inbound": {
-    "port": 10087,
-    "protocol": "vmess",
-    "settings": {
-      "clients": []
-    },
-    "streamSettings": {
-      "network": "tcp"
-    },
-    "tag": "proxy"
-  },
-  "inboundDetour": [
+  "inbounds": [
     {
-      "listen": "0.0.0.0",
-      "port": 10086,
+      "listen": "127.0.0.1",
+      "port": 9999,
       "protocol": "dokodemo-door",
       "settings": {
-        "address": "0.0.0.0"
+        "address": "127.0.0.1"
       },
       "tag": "api"
+    },
+    {
+      "tag": "proxy",
+      "listen": "127.0.0.1",
+      "port": 10086,
+      "protocol": "vmess",
+      "settings": {
+        "clients": [],
+        "disableInsecureEncryption": true,
+        "default": {
+          "level": 0,
+          "alterId": 16
+        }
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "tls",
+        "wsSettings": {
+          "path": "/ws"
+        }
+      }
     }
   ],
-  "log": {
-    "access": "./access.log",
-    "error": "./error.log",
-    "loglevel": "debug"
-  },
-  "outbound": {
-    "protocol": "freedom",
-    "settings": {}
-  },
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "settings": {}
+    }
+  ],
   "routing": {
     "settings": {
       "rules": [
@@ -54,7 +66,7 @@
   },
   "policy": {
     "levels": {
-      "1": {
+      "0": {
         "statsUserUplink": true,
         "statsUserDownlink": true
       }

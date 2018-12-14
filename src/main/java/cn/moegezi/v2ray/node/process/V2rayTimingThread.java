@@ -4,36 +4,40 @@ import cn.moegezi.v2ray.node.utils.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Calendar;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class V2rayTimingThread implements Runnable {
+public class V2rayTimingThread {
 
     private static V2rayTimingThread instance;
 
     private final Logger logger = LoggerFactory.getLogger(V2rayTimingThread.class);
-    private final V2rayGrpc v2rayGrpc;
     private final long checkRate = ConfigUtil.getLong("node.check-rate");
 
     private ScheduledExecutorService scheduExec;
+    private int lastUpdateDay = 0;
 
     public V2rayTimingThread() {
         this.scheduExec = Executors.newScheduledThreadPool(2);
-        this.v2rayGrpc = V2rayGrpc.getInstance();
-    }
-
-    @Override
-    public void run() {
-        try {
-            v2rayGrpc.update();
-        } catch (Exception e) {
-            logger.error("定时任务异常", e);
-        }
     }
 
     public void start() {
-        scheduExec.scheduleAtFixedRate(this, 0L, checkRate, TimeUnit.SECONDS);
+        scheduExec.scheduleAtFixedRate(() -> {
+            try {
+                Calendar cal = Calendar.getInstance();
+                int tmp = cal.get(Calendar.DATE);
+                if (tmp != lastUpdateDay) {
+                    V2rayUpdate.getInstance().checkUpdate();
+                    lastUpdateDay = tmp;
+                }
+                V2rayManager.getInstance().check();
+                V2rayGrpc.getInstance().update();
+            } catch (Exception e) {
+                logger.error("定时任务异常", e);
+            }
+        }, 0L, checkRate, TimeUnit.SECONDS);
     }
 
     public void stop() {

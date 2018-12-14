@@ -31,7 +31,7 @@ public class V2rayDao {
     private final Integer nodeId = ConfigUtil.getInteger("node.id");
     private final LRUCache localCache = new LRUCache(60 * 30 * 1000);
 
-    public V2rayDao() {
+    private V2rayDao() {
         this.db = DbUtil.getQueryRunner();
     }
 
@@ -51,7 +51,7 @@ public class V2rayDao {
         }
         try {
             db.batch(TRAFFIC_LOG, param);
-            logger.error("记录流量日志: USER_NUM " + traffic.size() + " ALL_TRAFFIC " + PublicUtil.trafficFormat(num));
+            logger.info("记录流量日志: USER_NUM " + traffic.size() + " ALL_TRAFFIC " + PublicUtil.trafficFormat(num));
         } catch (SQLException e) {
             logger.error("记录流量日志异常", e);
         }
@@ -72,7 +72,7 @@ public class V2rayDao {
         try {
             String sql = String.format(UPDATE_USER_TRAFFIC, uSql, dSql, t, ids);
             db.execute(sql);
-            logger.error("更新用户流量信息: USER_NUM " + list.size());
+            logger.info("更新用户流量信息: USER_NUM " + list.size());
         } catch (SQLException e) {
             logger.error("更新用户流量信息异常", e);
         }

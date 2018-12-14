@@ -23,3 +23,7 @@
 /dist/
 /nbdist/
 /.nb-gradle/
+
+### V2Ray ###
+v*.*.*
+*.log

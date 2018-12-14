@@ -1,37 +1,63 @@
 package cn.moegezi.v2ray.node.process;
 
-import cn.moegezi.v2ray.node.utils.ConfigUtil;
+import cn.moegezi.v2ray.node.utils.PublicUtil;
 import org.apache.commons.exec.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
-
+/**
+ * V2Ray进程管理
+ */
 public class V2rayManager {
 
-    private final V2rayDestroyer v2rayDestroyer;
-    private final String path = ConfigUtil.getString("v2ray.path");
-    private final String exec = ConfigUtil.getString("v2ray.exec");
-
+    private final Logger logger = LoggerFactory.getLogger(V2rayManager.class);
     private static V2rayManager instance;
+    private ExecuteWatchdog watchdog;
 
-    public V2rayManager() {
-        this.v2rayDestroyer = V2rayDestroyer.getInstance();
-    }
-
-    public void start() throws Exception {
-        CommandLine cmdLine = new CommandLine(new File(path, exec));
-        DefaultExecutor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(new File(path));
-        executor.setProcessDestroyer(v2rayDestroyer);
-        DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
-        executor.execute(cmdLine, resultHandler);
-        resultHandler.waitFor();
-    }
-
-    public void stop() {
-        Process process = v2rayDestroyer.getProcess();
-        if (process != null) {
-            process.destroyForcibly();
+    /**
+     * 启动V2Ray进程
+     */
+    public void start() {
+        try {
+            String version = V2rayUpdate.getInstance().getVersion();
+            if (version != null) {
+                DefaultExecutor executor = new DefaultExecutor();
+                watchdog = new ExecuteWatchdog(Long.MAX_VALUE);
+                executor.setWatchdog(watchdog);
+                CommandLine cmdLine = new CommandLine(version + "/v2ray");
+                DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
+                executor.execute(cmdLine, resultHandler);
+                PublicUtil.setV2rayStartTime();
+            }
+        } catch (Exception e) {
+            logger.error("V2Ray启动失败: " + e);
         }
+    }
+
+    /**
+     * 干掉V2Ray进程
+     */
+    public void stop() {
+        if (status()) {
+            watchdog.destroyProcess();
+        }
+    }
+
+    /**
+     * 检查进程有没有挂掉
+     */
+    public void check() {
+        if (!status()) {
+            start();
+            V2rayGrpc.getInstance().restart();
+        }
+    }
+
+    /**
+     * 获取启动状态
+     */
+    public boolean status() {
+        return watchdog != null && watchdog.isWatching();
     }
 
     public static V2rayManager getInstance() {
